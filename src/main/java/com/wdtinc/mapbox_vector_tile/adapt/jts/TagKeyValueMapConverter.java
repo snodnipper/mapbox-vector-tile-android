@@ -6,20 +6,26 @@ import com.wdtinc.mapbox_vector_tile.VectorTile;
 import java.util.*;
 
 /**
- * Convert MVT tags list to a {@link Map} of {@link String} to {@link Object}. Tags indices that are out
- * of range of the key or value list are ignored.
+ * Convert MVT tags list to a {@link Map} of {@link String} to {@link Object}. Tags indices that are
+ * out of range of the key or value list are ignored.
  *
  * @see ITagConverter
  */
 public final class TagKeyValueMapConverter implements ITagConverter {
 
-    /** If true, return null user data when tags are empty */
+    /**
+     * If true, return null user data when tags are empty.
+     */
     private final boolean nullIfEmpty;
 
-    /** If true, add id to user data object */
+    /**
+     * If true, add id to user data object.
+     */
     private final boolean addId;
 
-    /** The {@link Map} key for the feature id. */
+    /**
+     * The {@link Map} key for the feature id.
+     */
     private final String idKey;
 
     /**

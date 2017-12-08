@@ -8,18 +8,22 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Convert simple user data {@link Map} where the keys are {@link String} and values are {@link Object}. Supports
- * converting a specific map key to a user id. If the key to user id conversion fails, the error occurs silently
- * and the id is discarded.
+ * Convert simple user data {@link Map} where the keys are {@link String} and values are
+ * {@link Object}. Supports converting a specific map key to a user id. If the key to user id
+ * conversion fails, the error occurs silently and the id is discarded.
  *
  * @see IUserDataConverter
  */
 public final class UserDataKeyValueMapConverter implements IUserDataConverter {
 
-    /** If true, set feature id from user data */
+    /**
+     * If true, set feature id from user data.
+     */
     private final boolean setId;
 
-    /** The {@link Map} key for the feature id. */
+    /**
+     * The {@link Map} key for the feature id.
+     */
     private final String idKey;
 
     /**
@@ -42,13 +46,14 @@ public final class UserDataKeyValueMapConverter implements IUserDataConverter {
     }
 
     @Override
-    public void addTags(Object userData, MvtLayerProps layerProps, VectorTile.Tile.Feature.Builder featureBuilder) {
+    public void addTags(Object userData, MvtLayerProps layerProps,
+                        VectorTile.Tile.Feature.Builder featureBuilder) {
         if(userData != null) {
             try {
                 @SuppressWarnings("unchecked")
                 final Map<String, Object> userDataMap = (Map<String, Object>)userData;
 
-                userDataMap.entrySet().stream().forEach(e -> {
+                for (Map.Entry<String, Object> e : userDataMap.entrySet()) {
                     final String key = e.getKey();
                     final Object value = e.getValue();
 
@@ -60,7 +65,7 @@ public final class UserDataKeyValueMapConverter implements IUserDataConverter {
                             featureBuilder.addTags(valueIndex);
                         }
                     }
-                });
+                }
 
                 // Set feature id value
                 if(setId) {
@@ -72,14 +77,15 @@ public final class UserDataKeyValueMapConverter implements IUserDataConverter {
                             featureBuilder.setId((long)idValue);
                         } else if(idValue instanceof String) {
                             try {
-                                featureBuilder.setId(Long.valueOf((String)idValue));
-                            } catch (NumberFormatException ignored) {}
+                                featureBuilder.setId(Long.parseLong((String) idValue));
+                            } catch (NumberFormatException expected) { }
                         }
                     }
                 }
 
             } catch (ClassCastException e) {
-                LoggerFactory.getLogger(UserDataKeyValueMapConverter.class).error(e.getMessage(), e);
+                LoggerFactory.getLogger(UserDataKeyValueMapConverter.class).error(e.getMessage(),
+                    e);
             }
         }
     }

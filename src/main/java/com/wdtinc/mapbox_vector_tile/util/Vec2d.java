@@ -1,4 +1,3 @@
-
 package com.wdtinc.mapbox_vector_tile.util;
 
 /**
@@ -16,7 +15,7 @@ public final class Vec2d {
     }
 
     /**
-     * Construct instance with (x, y) values set to passed parameters
+     * Construct instance with (x, y) values set to passed parameters.
      *
      * @param x value in x
      * @param y value in y
@@ -26,7 +25,7 @@ public final class Vec2d {
     }
 
     /**
-     * Constructs instance with values from the input vector 'v'.
+     * Constructs instance with values from the input 'v'.
      *
      * @param v The vector
      */
@@ -49,7 +48,8 @@ public final class Vec2d {
     }
 
     /**
-     * Set the x and y values of this vector to match input vector 'v'. Return this vector for chaining.
+     * Set the x and y values of this vector to match input vector 'v'. Return this vector for
+     * chaining.
      *
      * @param v contains values to copy
      * @return this vector for chaining
@@ -120,7 +120,7 @@ public final class Vec2d {
     }
 
     @Override
-    public String toString () {
+    public String toString() {
         return "(" + x + "," + y + ")";
     }
 }

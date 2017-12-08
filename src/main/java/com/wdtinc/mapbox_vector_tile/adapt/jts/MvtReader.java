@@ -11,16 +11,16 @@ import com.wdtinc.mapbox_vector_tile.encoding.ZigZag;
 import com.wdtinc.mapbox_vector_tile.util.Vec2d;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Load Mapbox Vector Tiles (MVT) to JTS {@link Geometry}. Feature tags may be converted
- * to user data via {@link ITagConverter}.
+ * Load Mapbox Vector Tiles (MVT) to JTS {@link Geometry}. Feature tags may be converted to user
+ * data via {@link ITagConverter}.
  *
  * @see JtsMvt
  * @see JtsLayer
@@ -34,7 +34,7 @@ public final class MvtReader {
      * See {@link #loadMvt(InputStream, GeometryFactory, ITagConverter, RingClassifier)}.
      * Uses {@link #RING_CLASSIFIER_V2_1} for forming Polygons and MultiPolygons.
      *
-     * @param p path to the MVT
+     * @param file path to the MVT
      * @param geomFactory allows for JTS geometry creation
      * @param tagConverter converts MVT feature tags to JTS user data object
      * @return JTS MVT with geometry in MVT coordinates
@@ -44,17 +44,17 @@ public final class MvtReader {
      * @see Geometry#getUserData()
      * @see RingClassifier
      */
-    public static JtsMvt loadMvt(Path p,
+    public static JtsMvt loadMvt(File file,
                                  GeometryFactory geomFactory,
                                  ITagConverter tagConverter) throws IOException {
-        return loadMvt(p, geomFactory, tagConverter, RING_CLASSIFIER_V2_1);
+        return loadMvt(file, geomFactory, tagConverter, RING_CLASSIFIER_V2_1);
     }
 
     /**
      * Convenience method for loading MVT from file.
      * See {@link #loadMvt(InputStream, GeometryFactory, ITagConverter, RingClassifier)}.
      *
-     * @param p path to the MVT
+     * @param file path to the MVT
      * @param geomFactory allows for JTS geometry creation
      * @param tagConverter converts MVT feature tags to JTS user data object
      * @param ringClassifier determines how rings are parsed into Polygons and MultiPolygons
@@ -65,13 +65,13 @@ public final class MvtReader {
      * @see Geometry#getUserData()
      * @see RingClassifier
      */
-    public static JtsMvt loadMvt(Path p,
+    public static JtsMvt loadMvt(File file,
                                  GeometryFactory geomFactory,
                                  ITagConverter tagConverter,
                                  RingClassifier ringClassifier) throws IOException {
         final JtsMvt jtsMvt;
 
-        try(final InputStream is = new FileInputStream(p.toFile())) {
+        try(final InputStream is = new FileInputStream(file)) {
             jtsMvt = loadMvt(is, geomFactory, tagConverter, ringClassifier);
         }
 
@@ -138,9 +138,11 @@ public final class MvtReader {
 
                 final List<Integer> geomCmds = nextFeature.getGeometryList();
                 cursor.set(0d, 0d);
-                final Geometry nextGeom = readGeometry(geomCmds, geomType, geomFactory, cursor, ringClassifier);
+                final Geometry nextGeom = readGeometry(geomCmds, geomType, geomFactory, cursor,
+                    ringClassifier);
                 if(nextGeom != null) {
-                    nextGeom.setUserData(tagConverter.toUserData(id, nextFeature.getTagsList(), keysList, valuesList));
+                    nextGeom.setUserData(tagConverter.toUserData(id, nextFeature.getTagsList(),
+                        keysList, valuesList));
                     layerGeoms.add(nextGeom);
                 }
             }
@@ -170,7 +172,8 @@ public final class MvtReader {
                 result = readPolys(geomFactory, geomCmds, cursor, ringClassifier);
                 break;
             default:
-                LoggerFactory.getLogger(MvtReader.class).error("readGeometry(): Unhandled geometry type [{}]", geomType);
+                LoggerFactory.getLogger(MvtReader.class)
+                    .error("readGeometry(): Unhandled geometry type [{}]", geomType);
         }
 
         return result;
@@ -184,7 +187,8 @@ public final class MvtReader {
      * @param cursor contains current MVT extent position
      * @return JTS geometry or null on failure
      */
-    private static Geometry readPoints(GeometryFactory geomFactory, List<Integer> geomCmds, Vec2d cursor) {
+    private static Geometry readPoints(GeometryFactory geomFactory, List<Integer> geomCmds,
+                                       Vec2d cursor) {
 
         // Guard: must have header
         if(geomCmds.isEmpty()) {
@@ -215,7 +219,8 @@ public final class MvtReader {
             return null;
         }
 
-        final CoordinateSequence coordSeq = geomFactory.getCoordinateSequenceFactory().create(cmdLength, 2);
+        final CoordinateSequence coordSeq = geomFactory.getCoordinateSequenceFactory()
+            .create(cmdLength, 2);
         int coordIndex = 0;
         Coordinate nextCoord;
 
@@ -230,7 +235,11 @@ public final class MvtReader {
             nextCoord.setOrdinate(1, cursor.y);
         }
 
-        return coordSeq.size() == 1 ? geomFactory.createPoint(coordSeq) : geomFactory.createMultiPoint(coordSeq);
+        if(coordSeq.size() == 1) {
+            return geomFactory.createPoint(coordSeq);
+        } else {
+            return geomFactory.createMultiPoint(coordSeq);
+        }
     }
 
     /**
@@ -241,7 +250,8 @@ public final class MvtReader {
      * @param cursor contains current MVT extent position
      * @return JTS geometry or null on failure
      */
-    private static Geometry readLines(GeometryFactory geomFactory, List<Integer> geomCmds, Vec2d cursor) {
+    private static Geometry readLines(GeometryFactory geomFactory, List<Integer> geomCmds,
+                                      Vec2d cursor) {
 
         // Guard: must have header
         if(geomCmds.isEmpty()) {
@@ -325,7 +335,11 @@ public final class MvtReader {
             geoms.add(geomFactory.createLineString(nextCoordSeq));
         }
 
-        return geoms.size() == 1 ? geoms.get(0) : geomFactory.createMultiLineString(geoms.toArray(new LineString[geoms.size()]));
+        if(geoms.size() == 1) {
+            return geoms.get(0);
+        } else {
+            return geomFactory.createMultiLineString(geoms.toArray(new LineString[geoms.size()]));
+        }
     }
 
     /**
@@ -461,12 +475,10 @@ public final class MvtReader {
     /**
      * Classifies Polygon and MultiPolygon rings.
      */
-    @FunctionalInterface
     public interface RingClassifier {
 
         /**
          * <p>Classify a list of rings into polygons using surveyor formula.</p>
-         *
          * <p>Zero-area polygons are removed.</p>
          *
          * @param rings linear rings to classify into polygons
@@ -477,10 +489,15 @@ public final class MvtReader {
     }
 
 
-    /** Area for surveyor formula may be positive or negative for exterior rings. Mimics Mapbox parsers supporting V1. */
+    /**
+     * Area for surveyor formula may be positive or negative for exterior rings. Mimics Mapbox
+     * parsers supporting V1.
+     */
     public static final RingClassifier RING_CLASSIFIER_V1 = new PolyRingClassifierV1();
 
-    /** Area from surveyor formula must be positive for exterior rings. Obeys V2.1 spec. */
+    /**
+     * Area from surveyor formula must be positive for exterior rings. Obeys V2.1 spec.
+     */
     public static final RingClassifier RING_CLASSIFIER_V2_1 = new PolyRingClassifierV2_1();
 
 
@@ -512,7 +529,8 @@ public final class MvtReader {
 
                 if(area > 0d) {
                     if(outerPoly != null) {
-                        polygons.add(geomFactory.createPolygon(outerPoly, holes.toArray(new LinearRing[holes.size()])));
+                        polygons.add(geomFactory.createPolygon(outerPoly,
+                            holes.toArray(new LinearRing[holes.size()])));
                         holes.clear();
                     }
 
@@ -532,8 +550,8 @@ public final class MvtReader {
             }
 
             if(outerPoly != null) {
-                holes.toArray();
-                polygons.add(geomFactory.createPolygon(outerPoly, holes.toArray(new LinearRing[holes.size()])));
+                polygons.add(geomFactory.createPolygon(outerPoly,
+                    holes.toArray(new LinearRing[holes.size()])));
             }
 
             return polygons;
@@ -569,7 +587,8 @@ public final class MvtReader {
 
                 if(outerPoly == null || (outerArea < 0 == area < 0)) {
                     if(outerPoly != null) {
-                        polygons.add(geomFactory.createPolygon(outerPoly, holes.toArray(new LinearRing[holes.size()])));
+                        polygons.add(geomFactory.createPolygon(outerPoly,
+                            holes.toArray(new LinearRing[holes.size()])));
                         holes.clear();
                     }
 
@@ -589,8 +608,8 @@ public final class MvtReader {
             }
 
             if(outerPoly != null) {
-                holes.toArray();
-                polygons.add(geomFactory.createPolygon(outerPoly, holes.toArray(new LinearRing[holes.size()])));
+                polygons.add(geomFactory.createPolygon(outerPoly,
+                    holes.toArray(new LinearRing[holes.size()])));
             }
 
             return polygons;
